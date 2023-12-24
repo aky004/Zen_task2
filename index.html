@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Import Products</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <style>
+        .product-list-heading {
+            font-size: 24px; 
+            color: #fff; /* White text color */
+            margin-bottom: 15px; 
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-gap: 20px;
+            padding: 20px;
+            background-color: #333; /* Dark gray background */
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .grid-item {
+            background-color: #000; /* Black background */
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .grid-full {
+            grid-column: 1 / 3;
+        }
+        .file-input {
+            border: none;
+            padding: 10px;
+            color: #fff;
+
+        }
+
+        /* Style for the selected file name text */
+        .selected-file {
+            color: #fff; /* White text color */
+        }
+
+        .select-lists {
+            display: flex;
+            justify-content: space-between;
+        }
+        .select-lists select {
+            width: 45%;
+        }
+        .button-group {
+            display: flex;
+            justify-content: center; /* Center align the buttons */
+            margin-top: 20px;
+        }
+        .btn-green {
+            background-color: #28a745;
+            color: white;
+        }
+        .btn-green:hover {
+            background-color: #218838;
+        }
+        .btn-white {
+            background-color: #fff;
+            color: #333; /* Dark gray text color */
+        }
+
+        /* Style for the Back button */
+        .btn-back {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        
+        /* Style for Step 1, Step 2, and Step 3 text */
+        .step-text {
+            color: #fff; /* White text color */
+        }
+    </style>
+</head>
+<body style="background-color: #868585;">
+    <div class="container">
+        <div class="grid-container">
+            <!-- Step 1: Select File -->
+            <div class="grid-item">
+                <h5 class="step-text">Step 1: Select File</h5>
+                <input type="file" id="fileInput" class="file-input" accept=".csv,.json">
+                <br>
+                <small class="step-text">Supported File Type(s): .CSV, .JSON</small>
+                <!-- Display the selected file name in white -->
+                <div id="selectedFileName" class="selected-file"></div>
+            </div>
+
+            <!-- Step 2: Specify Format -->
+            <div class="grid-item">
+                <h5 class="step-text">Step 2: Specify Format</h5>
+                <div class="form-group">
+                    <label for="fileType" class="step-text">File Type</label>
+                    <select id="fileType" class="form-control">
+                        <option>JSON</option>
+                        <option>CSV</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="charEncoding" class="step-text">Character Encoding</label>
+                    <select id="charEncoding" class="form-control">
+                        <option>UTF-8</option>
+                        <option>UTF-16BE</option>
+                        <option>UTF-32BE</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="delimiter" class="step-text">Delimiter</label>
+                    <select id="delimiter" class="form-control">
+                        <option>comma</option>
+                        <option>semicolon</option>
+                    </select>
+                </div>
+                <div class="form-check">
+                    <input type="checkbox" id="hasHeader" class="form-check-input">
+                    <label for="hasHeader" class="form-check-label step-text">Has Header</label>
+                </div>
+            </div>
+
+            <!-- Step 3: Display Handling -->
+            <div class="grid-item grid-full">
+                <h5 class="step-text">Step 3: Display Handling</h5>
+                <div class="step-text">Select the fields to be displayed</div>
+                <div class="select-lists">
+                    <select multiple id="availableFields" class="form-control"></select>
+                    <div>
+                        <button onclick="moveToDisplayed()" class="btn btn-secondary btn-green">&gt;&gt;</button>
+                        <button onclick="moveToAvailable()" class="btn btn-secondary btn-green">&lt;&lt;</button>
+                    </div>
+                    <select multiple id="displayedFields" class="form-control"></select>
+                </div>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button onclick="proceedToDisplay()" class="btn btn-primary btn-green">Next</button>
+        </div>
+    </div>
+
+    <div id="productListPage" class="container" style="display: none;">
+        <button onclick="goBackToHome()" class="btn btn-back">Back</button>
+        <h3 class="product-list-heading">Product List</h3>
+        <table id="productListTable" class="table table-striped mt-4">
+            <thead class="thead-dark"></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const selectableFields = ['Product Id', 'Subcategory', 'Title', 'Price', 'Popularity'];
+            populateSelectFields(selectableFields);
+        });
+
+        function populateSelectFields(fields) {
+            const availableFieldsSelect = document.getElementById('availableFields');
+            fields.forEach(field => {
+                let option = document.createElement('option');
+                option.value = field.toLowerCase();
+                option.text = field;
+                availableFieldsSelect.appendChild(option);
+            });
+        }
+
+        function moveOptionsBetweenSelectLists(fromSelect, toSelect) {
+            Array.from(fromSelect.selectedOptions).forEach(option => {
+                toSelect.appendChild(option.cloneNode(true));
+                option.remove();
+            });
+        }
+
+        function moveToDisplayed() {
+            moveOptionsBetweenSelectLists(document.getElementById('availableFields'), document.getElementById('displayedFields'));
+        }
+
+        function moveToAvailable() {
+            moveOptionsBetweenSelectLists(document.getElementById('displayedFields'), document.getElementById('availableFields'));
+        }
+
+        function proceedToDisplay() {
+            const fileInput = document.getElementById('fileInput');
+            if (fileInput.files.length === 0) {
+                alert('Please select a file.');
+                return;
+            }
+
+            // Display the selected file name in white
+            const selectedFileName = document.getElementById('selectedFileName');
+            selectedFileName.textContent = `Selected File: ${fileInput.files[0].name}`;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const jsonData = JSON.parse(e.target.result);
+
+                    if (!jsonData.products || typeof jsonData.products !== 'object') {
+                        throw new Error("The JSON structure is not as expected.");
+                    }
+
+                    const productsArray = Object.entries(jsonData.products).map(([id, product]) => ({
+                        'product id': id,
+                        ...product
+                    }));
+
+                    displayProducts(productsArray);
+                } catch (error) {
+                    console.error("Error parsing JSON: ", error);
+                    alert('Error reading or parsing file: ' + error.message);
+                }
+            };
+            reader.onerror = function() {
+                alert('Error reading file');
+            };
+
+            reader.readAsText(fileInput.files[0]);
+        }
+
+        function displayProducts(products) {
+            const displayedFieldsSelect = document.getElementById('displayedFields');
+            const selectedFields = Array.from(displayedFieldsSelect.options).map(option => option.value);
+
+            products.sort((a, b) => parseInt(b.popularity) - parseInt(a.popularity));
+
+            const table = document.getElementById('productListTable');
+            const thead = table.querySelector('thead');
+            const tbody = table.querySelector('tbody');
+
+            thead.innerHTML = '';
+            tbody.innerHTML = '';
+
+            let headerRow = thead.insertRow();
+            selectedFields.forEach(field => {
+                let th = document.createElement('th');
+                th.textContent = field.charAt(0).toUpperCase() + field.slice(1);
+                headerRow.appendChild(th);
+            });
+
+            products.forEach(product => {
+                let row = tbody.insertRow();
+                selectedFields.forEach(field => {
+                    let cell = row.insertCell();
+                    cell.textContent = product[field] || 'N/A';
+                });
+            });
+            document.querySelector('.grid-container').style.display = 'none';
+            document.getElementById('productListPage').style.display = 'block';
+    
+            // Hide the Next button when displaying the table
+            document.querySelector('.button-group').style.display = 'none';
+        }
+
+        function goBackToHome() {
+            location.reload();
+        }
+    </script>
+</body>
+</html>
